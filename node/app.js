@@ -215,6 +215,10 @@ function receivedAuthentication(event) {
  * then we'll simply confirm that we've received the attachment.
  * 
  */
+ 
+  var start;//查詢是否開始
+  var step;//查詢到第幾個步驟了
+ 
 function receivedMessage(event) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
@@ -249,69 +253,52 @@ function receivedMessage(event) {
     return;
   }
 
-  if (messageText) {
 
+  
+
+
+  if (messageText) {
     // If we receive a text message, check to see if it matches any special
     // keywords and send back the corresponding example. Otherwise, just echo
     // the text we received.
-    switch (messageText) {
-      case 'image':
+    if(start != 87 ){
+      switch (messageText) {
+        case '開始':
+          sendTextMessage(senderID, "查詢開始！請問你想領養甚麼寵物？（EX：狗）");
+          start = 87;
+          step = 1;
+          break;
+        default:
+          sendTextMessage(senderID, "你好！我是動物領養資訊站的小幫手,我可以幫助你查詢適合你領養的寵物喔！只要輸入[開始]這兩個字就能開始查詢~ ");
+      }
+    } else if(start==87){
+      if(step == 1){//取得動物類型
+        sendTextMessage(senderID, "接下來的問題如果你覺得無所謂都可以、請回答[都可]兩字");
+        sendTextMessage(senderID, "寵物的性別？（公、母）");
+        step =2;
+      } else if(step == 2){//取得動物性別
+        sendTextMessage(senderID, "寵物的體型？（大、中、小）");
+        step = 3;
+      } else if(step == 3){//取得動物體型
+        sendTextMessage(senderID, "寵物是否成年？（是、否）");
+        step = 4;
+      } else if(step == 4){//取得動物年紀
+        sendTextMessage(senderID, "寵物的毛色？");
+        step = 5;
+      } else if(step == 5){//取得動物年紀
+        sendTextMessage(senderID, "寵物所在的地點？");
+        step = 6;
+      } else if(step == 6){//取得動物地點
+        sendTextMessage(senderID, "詢問完成、開始查詢~~~");
         sendImageMessage(senderID);
-        break;
-
-      case 'gif':
-        sendGifMessage(senderID);
-        break;
-
-      case 'audio':
-        sendAudioMessage(senderID);
-        break;
-
-      case 'video':
-        sendVideoMessage(senderID);
-        break;
-
-      case 'file':
-        sendFileMessage(senderID);
-        break;
-
-      case 'button':
-        sendButtonMessage(senderID);
-        break;
-
-      case 'generic':
-        sendGenericMessage(senderID);
-        break;
-
-      case 'receipt':
-        sendReceiptMessage(senderID);
-        break;
-
-      case 'quick reply':
-        sendQuickReply(senderID);
-        break;        
-
-      case 'read receipt':
-        sendReadReceipt(senderID);
-        break;        
-
-      case 'typing on':
-        sendTypingOn(senderID);
-        break;        
-
-      case 'typing off':
-        sendTypingOff(senderID);
-        break;        
-
-      case 'account linking':
-        sendAccountLinking(senderID);
-        break;
-
-      default:
-        sendTextMessage(senderID, messageText);
-    }
+        sendResultMessage(senderID);//用到這兩個函式、往下找、如果資料很多比就要用for
+        step = 0;start=0;
+        
+      } 
+    } 
+    
   } else if (messageAttachments) {
-    sendTextMessage(senderID, "Message with attachment received");
+    sendTextMessage(senderID, "C8763");
   }
 }
 
@@ -405,7 +392,7 @@ function receivedAccountLink(event) {
 }
 
 /*
- * Send an image using the Send API.
+ * 傳送寵物圖片
  *
  */
 function sendImageMessage(recipientId) {
@@ -417,7 +404,7 @@ function sendImageMessage(recipientId) {
       attachment: {
         type: "image",
         payload: {
-          url: SERVER_URL + "/assets/rift.png"
+          url: "https://cdn.free.com.tw/blog/wp-content/uploads/2014/08/Placekitten480-g.jpg"
         }
       }
     }
@@ -425,6 +412,7 @@ function sendImageMessage(recipientId) {
 
   callSendAPI(messageData);
 }
+
 
 /*
  * Send a Gif using the Send API.
@@ -532,11 +520,11 @@ function sendTextMessage(recipientId, messageText) {
   callSendAPI(messageData);
 }
 
-/*
- * Send a button message using the Send API.
+/*/////////////////////////////////////////////////////////////////////////////////////////
+ * 回傳寵物資訊
  *
  */
-function sendButtonMessage(recipientId) {
+function sendResultMessage(recipientId) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -546,17 +534,9 @@ function sendButtonMessage(recipientId) {
         type: "template",
         payload: {
           template_type: "button",
-          text: "This is test text",
+          text: "用很多tex來顯示寵物資訊 \n 拉拉拉…拉拉拉",
           buttons:[{
-            type: "web_url",
-            url: "https://www.oculus.com/en-us/rift/",
-            title: "Open Web URL"
-          }, {
-            type: "postback",
-            title: "Trigger Postback",
-            payload: "DEVELOPED_DEFINED_PAYLOAD"
-          }, {
-            type: "phone_number",
+            type: "phone_number",//電話
             title: "Call Phone Number",
             payload: "+16505551234"
           }]
@@ -572,7 +552,7 @@ function sendButtonMessage(recipientId) {
  * Send a Structured Message (Generic Message type) using the Send API.
  *
  */
-function sendGenericMessage(recipientId) {
+function sendgenericMessage(recipientId) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -583,33 +563,15 @@ function sendGenericMessage(recipientId) {
         payload: {
           template_type: "generic",
           elements: [{
-            title: "rift",
-            subtitle: "Next-generation virtual reality",
-            item_url: "https://www.oculus.com/en-us/rift/",               
-            image_url: SERVER_URL + "/assets/rift.png",
+            title: "寵物",
+            subtitle: "寵物說明",
+            image_url: "https://cdn.free.com.tw/blog/wp-content/uploads/2014/08/Placekitten480-g.jpg",//放圖片
+            text: "用很多text來講寵物資訊",
             buttons: [{
-              type: "web_url",
-              url: "https://www.oculus.com/en-us/rift/",
-              title: "Open Web URL"
-            }, {
-              type: "postback",
-              title: "Call Postback",
-              payload: "Payload for first bubble",
+              type: "phone_number",
+              title: "馬上聯絡我",
+              payload: "+16505551234",//電話號碼
             }],
-          }, {
-            title: "touch",
-            subtitle: "Your Hands, Now in VR",
-            item_url: "https://www.oculus.com/en-us/touch/",               
-            image_url: SERVER_URL + "/assets/touch.png",
-            buttons: [{
-              type: "web_url",
-              url: "https://www.oculus.com/en-us/touch/",
-              title: "Open Web URL"
-            }, {
-              type: "postback",
-              title: "Call Postback",
-              payload: "Payload for second bubble",
-            }]
           }]
         }
       }
