@@ -18,7 +18,7 @@ const
   https = require('https'), 
   http = require("http"),
   request = require('request'), 
-  Url = require("url"),
+  FB = require("fb"),
   querystring = require('querystring');
 
 var app = express();
@@ -219,11 +219,14 @@ function receivedAuthentication(event) {
  * 
  */
  
-  var start;//查詢是否開始
-  var step;//查詢到第幾個步驟了
+  //var user = {};
+  var start = {};//查詢是否開始
+  var step = {};//查詢到第幾個步驟了
+  var query_count = {};
   
   //儲存搜尋項目
-  var search = new Object();
+  var search = {};
+  var req = [];
   var pattern = {
     "": "無",
     "N": "未輸入",
@@ -248,8 +251,6 @@ function receivedAuthentication(event) {
     "CHILD": "否",
     "ADULT": "是"
   }
-  var query_count;
-  var req = [];
  
 function receivedMessage(event) {
   var senderID = event.sender.id;
@@ -290,45 +291,47 @@ function receivedMessage(event) {
 
 
   if (messageText) {
+    if (typeof search[senderID] == 'undefined')
+      search[senderID] = {};
     // If we receive a text message, check to see if it matches any special
     // keywords and send back the corresponding example. Otherwise, just echo
     // the text we received.
-    if(start != 87 ){
+    if(start[senderID] != 87 ){
       switch (messageText) {
         case '開始':
           sendTextMessage(senderID, "查詢開始！\n接下來的問題如果你覺得無所謂都可以，請回答[都可]兩字");
           setTimeout(function(){ sendTextMessage(senderID, "請問你想領養甚麼寵物？\n（EX：狗）"); }, 2000);
-          start = 87;
-          step = 1;
+          start[senderID] = 87;
+          step[senderID] = 1;
           break;
         default:
           sendTextMessage(senderID, "你好！我是動物領養資訊站的小幫手，我可以幫助你查詢適合你領養的寵物喔！\n只要輸入[開始]這兩個字就能開始查詢~ ");
       }
-    } else if(start==87){
-      if(step == 1){//取得動物類型
-        search.kind = messageText;
+    } else if(start[senderID]==87){
+      if(step[senderID] == 1){//取得動物類型
+        search[senderID].kind = messageText;
         sendTextMessage(senderID, "寵物的性別？\n（公 / 母）");
-        step = 2;
-      } else if(step == 2){//取得動物性別
-        search.sex = messageText;
+        step[senderID] = 2;
+      } else if(step[senderID] == 2){//取得動物性別
+        search[senderID].sex = messageText;
         sendTextMessage(senderID, "寵物的體型？\n（迷你 / 大型 / 中型 / 小型）");
-        step = 3;
-      } else if(step == 3){//取得動物體型
-        search.bodytype = messageText;
+        step[senderID] = 3;
+      } else if(step[senderID] == 3){//取得動物體型
+        search[senderID].bodytype = messageText;
         sendTextMessage(senderID, "寵物是否成年？\n（是 / 否）");
-        step = 4;
-      } else if(step == 4){//取得動物年紀
-        search.age = messageText;
+        step[senderID] = 4;
+      } else if(step[senderID] == 4){//取得動物年紀
+        search[senderID].age = messageText;
         sendTextMessage(senderID, "寵物的毛色？\n（簡短比較有利搜尋）");
-        step = 5;
-      } else if(step == 5){//取得動物毛色
-        search.colour = messageText;
+        step[senderID] = 5;
+      } else if(step[senderID] == 5){//取得動物毛色
+        search[senderID].colour = messageText;
         sendTextMessage(senderID, "寵物所在的地點？\n（簡短比較有利搜尋）");
-        step = 6;
-      } else if(step == 6){//取得動物地點
-        search.place = messageText;
+        step[senderID] = 6;
+      } else if(step[senderID] == 6){//取得動物地點
+        search[senderID].place = messageText;
         sendTextMessage(senderID, "詢問完成、開始查詢~~~");
-        query_count = 0;
+        query_count[senderID] = 0;
         req = "";
         var _request = http.get("http://data.coa.gov.tw/Service/OpenData/AnimalOpenData.aspx", function(response) {
           response.on('data', function (chunk) {
@@ -338,18 +341,21 @@ function receivedMessage(event) {
             req = JSON.parse(req);
             sendTextMessage(senderID, "搜尋結果如下：");
             setTimeout(function(){ find(senderID); }, 2000);
-            step = 7;
+            step[senderID] = 7;
           });
         });
         _request.on("error", function(err) {
           console.log(err);
         });
-      } else if(step == 7){
+      } else if(step[senderID] == 7){
+        if (messageText == '確認領養') {
+          autoPost(req, query_count[senderID])
+        }
         if (messageText == '是')
           find(senderID);
         else {
-          step = 0;
-          start=0;
+          step[senderID] = 0;
+          start[senderID]=0;
           sendTextMessage(senderID, "你好！我是動物領養資訊站的小幫手，我可以幫助你查詢適合你領養的寵物喔！\n只要輸入[開始]這兩個字就能開始查詢~ ");
         }
       }
@@ -361,34 +367,34 @@ function receivedMessage(event) {
 }
 
 function find(senderID) {
-  for (var i = query_count, c = 0; i < req.length; i++, c = 0) {
-    if (search.kind == "都可" || req[i].animal_kind.match(search.kind) != null)
+  for (var i = query_count[senderID], c = 0; i < req.length; i++, c = 0) {
+    if (search[senderID].kind == "都可" || req[i].animal_kind.match(search[senderID].kind) != null)
       c++;
-    if (search.sex == "都可" || pattern[req[i].animal_sex] == search.sex)
+    if (search[senderID].sex == "都可" || pattern[req[i].animal_sex] == search[senderID].sex)
       c++;
-    if (search.bodytype == "都可" || pattern[req[i].animal_bodytype] == search.bodytype)
+    if (search[senderID].bodytype == "都可" || pattern[req[i].animal_bodytype] == search[senderID].bodytype)
       c++;
-    if (search.age == "都可" || _pattern[req[i].animal_age] == search.age)
+    if (search[senderID].age == "都可" || _pattern[req[i].animal_age] == search[senderID].age)
       c++;
-    if (search.colour == "都可" || req[i].animal_colour.match(search.colour) != null)
+    if (search[senderID].colour == "都可" || req[i].animal_colour.match(search[senderID].colour) != null)
       c++;
-    if (search.place == "都可" || req[i].animal_place.match(search.place) != null)
+    if (search[senderID].place == "都可" || req[i].animal_place.match(search[senderID].place) != null)
       c++;
     if (c == 6)
     {
-      query_count = i+1;
+      query_count[senderID] = i+1;
       c = 0;
       sendImageMessage(senderID, req[i].album_file);
       setTimeout(function(){ sendTextMessage(senderID, req[i].animal_remark); }, 2000);
       setTimeout(function(){ sendTextMessage(senderID, "小檔案\n動物編號：" + req[i].animal_id + "\n區域編號：" + req[i].animal_subid + "\n狀態：" + pattern[req[i].animal_status] + "\n類型：" + req[i].animal_kind + "\n性別：" + pattern[req[i].animal_sex] + "\n體型：" + pattern[req[i].animal_bodytype] + "\n年紀：" + pattern[req[i].animal_age] + "\n毛色：" + req[i].animal_colour + "\n尋獲地點：" + req[i].animal_foundplace + "\n目前所在地點：" + req[i].animal_place + "\n是否結紮：" + _pattern[req[i].animal_sterilization] + "\n是否已施打狂犬病疫苗：" + _pattern[req[i].animal_bacterin] + "\n開放認養起始日期：" + req[i].animal_opendate + "\n開放認養截止日期：" + req[i].animal_closeddate + "\n資料更新日期：" + req[i].animal_update); }, 4000);
       setTimeout(function(){ sendTextMessage(senderID, "聯絡資訊\n收容所名稱：" + req[i].shelter_name + "\n收容所地址：" + req[i].shelter_address + "\n聯絡電話：" + req[i].shelter_tel); }, 6000);
-      setTimeout(function(){ sendTextMessage(senderID, "是否顯示下一筆資料？（是 / 否）"); }, 8000);
+      setTimeout(function(){ sendTextMessage(senderID, "是否顯示下一筆資料？（是 / 否）, 若想領養該寵物 請輸入 [確認領養] 我們將結束搜尋並發文~~"); }, 8000);
       return;
     }
   }
   sendTextMessage(senderID, "已無符合搜尋條件的寵物了");
-  step = 0;
-  start=0;
+  step[senderID] = 0;
+  start[senderID]=0;
 }
 
 /*
@@ -876,6 +882,35 @@ function callSendAPI(messageData) {
       console.error(response.error);
     }
   });  
+}
+
+
+function autoPost(req, index) {
+  //console.log('The function is start')
+  var pageId = "1071972299547635"
+  var token = "EAACEdEose0cBAKiD4PARoohcjZCeoALb4r3qZBkk1DbmZBVpEPyksAZAtAIlBXjBI6wHNfr3Aj0QxBPWkToIVHYHR30D6KXF1A8p6svTZCRuCNwuFThjaEeI6pK9AwtVTD5mRmwLasDGFXkjZAOaQg1Wqxf9XtXpqrNV5oPgbMIM6pA1HOYYYF";
+  
+  FB.setAccessToken(token)
+  //console.log('token was set')
+  FB.api('/' + pageId, {fields: token}, function(resp) {
+    //console.log('api is working')
+    //if(resp.access_token) {
+      console.log('api is working')
+      FB.api('/' + pageId + '/feed',
+        'post',
+        { 
+          picture: req[index - 1].album_file, // animal picture
+          link: req[index - 1].album_file,
+          //url: "http://ugc.qpic.cn/baikepic2/7714/20151105155440-693106979.jpg/0",
+          message: "\nHello everyone I have been adopt~~~~\n\n\n小檔案\n動物編號：" + req[index - 1].animal_id + "\n區域編號：" + req[index - 1].animal_subid + "\n狀態：" + pattern[req[index - 1].animal_status] + "\n類型：" + req[index - 1].animal_kind + "\n性別：" + pattern[req[index - 1].animal_sex] + "\n體型：" + pattern[req[index - 1].animal_bodytype] + "\n年紀：" + pattern[req[index - 1].animal_age] + "\n毛色：" + req[index - 1].animal_colour + "\n尋獲地點：" + req[index - 1].animal_foundplace + "\n目前所在地點：" + req[index - 1].animal_place + "\n是否結紮：" + _pattern[req[index - 1].animal_sterilization] + "\n是否已施打狂犬病疫苗：" + _pattern[req[index - 1].animal_bacterin] + "\n",
+          access_token: resp.access_token
+        }
+        ,function(response) {
+        console.log('po po po po po po po po')
+        console.log(response);
+        });
+      //}
+    });
 }
 
 // Start server
