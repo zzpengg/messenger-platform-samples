@@ -887,9 +887,9 @@ function callSendAPI(messageData) {
 
 function autoPost(req, index) {
   //console.log('The function is start')
-  var pageId = "726301927527865"
-  var token = "EAAKxeP8cbpQBAKqzN35Di4pgmxxl9qHoupIZCgIabZA4slaBtgXPUzGtD6ZCe5srCI81rd26sKwJgTLJpUNZCK8EeUzBRwOgYiwNpZADfB8ANua8nieXA2kJsoyhnrQhHtvvW0FehOWUv5G7OpIYb4MUkG6bBY6Ba9wc5uD1ZCOQZDZD";
-
+  var pageId = "1477720848276964"
+  var token = "EAAYF0HUspqwBAOaKg4OcIVi7ON3VspUbPrhHGd1V2h3EoIry5zzNpJ0z1c7xadin66yULW7D4ZB5KXJhM1lBoDblSNQZCWODAN7JVho1lENAQY5vOsxVDCbirnqMtJoOoqAXoJRgwcc997fZCJQEDewM0R7YkZAZA786VRc95wwZDZD";
+  
   FB.setAccessToken(token)
   //console.log('token was set')
   FB.api('/' + pageId, {fields: token}, function(resp) {
