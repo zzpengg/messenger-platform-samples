@@ -300,17 +300,17 @@ function receivedMessage(event) {
       switch (messageText) {
         case '開始':
           sendTextMessage(senderID, "查詢開始！\n接下來的問題如果你覺得無所謂都可以，請回答[都可]兩字");
-          setTimeout(function(){ sendTextMessage(senderID, "請問你想領養甚麼寵物？\n（EX：狗）"); }, 2000);
+          setTimeout(function(){ sendTextMessage(senderID, "你的預算多少？\n（EX：5000）"); }, 2000);
           start[senderID] = 87;
           step[senderID] = 1;
           break;
         default:
-          sendTextMessage(senderID, "你好！我是動物領養資訊站的小幫手，我可以幫助你查詢適合你領養的寵物喔！\n只要輸入[開始]這兩個字就能開始查詢~ ");
+          sendTextMessage(senderID, "你好！我是彰師租屋的小幫手，我可以幫助你查詢你想要租的房子喔！\n只要輸入[開始]這兩個字就能開始查詢~ ");
       }
     } else if(start[senderID]==87){
       if(step[senderID] == 1){//取得動物類型
         search[senderID].kind = messageText;
-        sendTextMessage(senderID, "寵物的性別？\n（公 / 母）");
+        sendQuickReply(senderID, "租金", ["小於4000", "4000~6000" , "6000以上"]);
         step[senderID] = 2;
       } else if(step[senderID] == 2){//取得動物性別
         search[senderID].sex = messageText;
