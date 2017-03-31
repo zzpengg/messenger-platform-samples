@@ -227,40 +227,24 @@ function receivedAuthentication(event) {
   //儲存搜尋項目
   var search = {};
   var req = [];
-  var pattern = {
-    "": "無",
-    "N": "未輸入",
-    "M": "公",
-    "F": "母",
-    "MINI": "迷你",
-    "SMALL": "小型",
-    "MEDIUM": "中型",
-    "BIG": "大型",
-    "NONE": "未公告",
-    "OPEN": "開放認養",
-    "ADOPTED": "已認養",
-    "OTHER": "其他",
-    "DEAD": "死亡",
-    "CHILD": "幼年",
-    "ADULT": "成年"
-    };
   var _pattern = {
-    "N": "未輸入",
-    "T": "是",
-    "F": "否",
-    "CHILD": "否",
-    "ADULT": "是"
+    "true":"是",
+    "false":"否"
   }
 
-function receivedMessage(event) {
+ 
+const receivedMessage=async(event)=> {
+
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfMessage = event.timestamp;
   var message = event.message;
 
+
   console.log("Received message for user %d and page %d at %d with message:",
     senderID, recipientID, timeOfMessage);
   console.log(JSON.stringify(message));
+
 
   var isEcho = message.is_echo;
   var messageId = message.mid;
@@ -272,18 +256,16 @@ function receivedMessage(event) {
   var messageAttachments = message.attachments;
   var quickReply = message.quick_reply;
 
+
   if (isEcho) {
     // Just logging message echoes to console
     console.log("Received echo for message %s and app %d with metadata %s",
       messageId, appId, metadata);
+
     return;
   } else if (quickReply) {
     var quickReplyPayload = quickReply.payload;
-    console.log("Quick reply for message %s with payload %s",
-      messageId, quickReplyPayload);
-
-    sendTextMessage(senderID, "Quick reply tapped");
-    return;
+    messageText = quickReplyPayload;
   }
 
 
@@ -293,54 +275,65 @@ function receivedMessage(event) {
   if (messageText) {
     if (typeof search[senderID] == 'undefined')
       search[senderID] = {};
-    // If we receive a text message, check to see if it matches any special
-    // keywords and send back the corresponding example. Otherwise, just echo
-    // the text we received.
-    if(start[senderID] != 87 ){
+      if(messageText=="再次查詢"){
+        start[senderID]=87;
+        step[senderID] = 1;
+        setTimeout(function(){sendQuickReply(senderID, "租屋地點", ["寶山", "進德" ,"都可"]);}, 2000);
+ 
+      }
+    else if(messageText=="結束查詢"){
+        sendTextMessage(senderID,"感謝您的查詢\n若想再次查詢\n請按↙功能表[開始使用]");
+        start[senderID]=0;
+        step[senderID] = 0;
+    }
+    else if(start[senderID] != 87 ){
       switch (messageText) {
-        case '開始':
-          sendTextMessage(senderID, "查詢開始！\n接下來的問題如果你覺得無所謂都可以，請回答[都可]兩字");
-          setTimeout(function(){ sendTextMessage(senderID, "請問你想領養甚麼寵物？\n（EX：狗）"); }, 2000);
+        case '查詢':
+          sendTextMessage(senderID, "查詢開始！\n接下來的問題如果你覺得無所謂都可以，請回答[都可]兩字，若有按鈕選項請按按鈕來回覆");
+          setTimeout(function(){sendQuickReply(senderID, "租屋地點", ["寶山", "進德" ,"都可"]);}, 2000);
           start[senderID] = 87;
-          step[senderID] = 1;
-          break;
+          step[senderID] = 1;//米分糸工家齊
+          break;// 紫柏維
         default:
-          sendTextMessage(senderID, "你好！我是動物領養資訊站的小幫手，我可以幫助你查詢適合你領養的寵物喔！\n只要輸入[開始]這兩個字就能開始查詢~ ");
+          sendQuickReply(senderID, "你好！\n我是彰師租屋的小幫手\n我可以幫助你查詢你想要租的房子喔！ ",["查詢"]);
       }
     } else if(start[senderID]==87){
-      if(step[senderID] == 1){//取得動物類型
-        search[senderID].kind = messageText;
-        sendTextMessage(senderID, "寵物的性別？\n（公 / 母）");
+      if(step[senderID] == 1){//租金
+        search[senderID].area = messageText;
+        sendQuickReply(senderID, "租金", ["小於3000", "3000~4000" ,"4000~5000","5000以上","都可"]);
         step[senderID] = 2;
-      } else if(step[senderID] == 2){//取得動物性別
-        search[senderID].sex = messageText;
-        sendTextMessage(senderID, "寵物的體型？\n（迷你 / 大型 / 中型 / 小型）");
+      } else if(step[senderID] == 2){//取得類型
+        search[senderID].rent = messageText;
+        sendQuickReply(senderID, "租屋類型？\n（套房 / 雅房 ）",["套房","雅房","都可"]);
         step[senderID] = 3;
-      } else if(step[senderID] == 3){//取得動物體型
-        search[senderID].bodytype = messageText;
-        sendTextMessage(senderID, "寵物是否成年？\n（是 / 否）");
+      } else if(step[senderID] == 3){//取得網路
+        search[senderID].type = messageText;
+        sendQuickReply(senderID, "是否有網路？",["是","否","都可"]);
         step[senderID] = 4;
-      } else if(step[senderID] == 4){//取得動物年紀
-        search[senderID].age = messageText;
-        sendTextMessage(senderID, "寵物的毛色？\n（簡短比較有利搜尋）");
+      } else if(step[senderID] == 4){//取得水
+        search[senderID].checknet = messageText;
+        sendQuickReply(senderID, "是否包水？\n",["是","否","都可"]);
         step[senderID] = 5;
-      } else if(step[senderID] == 5){//取得動物毛色
-        search[senderID].colour = messageText;
-        sendTextMessage(senderID, "寵物所在的地點？\n（簡短比較有利搜尋）");
+      } else if(step[senderID] == 5){//取得電
+        search[senderID].checkwater = messageText;
+        sendQuickReply(senderID, "是否包電？\n",["是","否","都可"]);
         step[senderID] = 6;
-      } else if(step[senderID] == 6){//取得動物地點
-        search[senderID].place = messageText;
+      } else if(step[senderID] == 6){
+        search[senderID].checkele = messageText;
         sendTextMessage(senderID, "詢問完成、開始查詢~~~");
         query_count[senderID] = 0;
         req = "";
-        var _request = http.get("http://data.coa.gov.tw/Service/OpenData/AnimalOpenData.aspx", function(response) {
-          response.on('data', function (chunk) {
+        var _request = await http.get("http://test-zzpengg.c9users.io:8080/house", async(response)=> {
+          response.on('data',  (chunk)=> {
             req += chunk;
           });
-          response.on('end', function() {
-            req = JSON.parse(req);
-            sendTextMessage(senderID, "搜尋結果如下：");
-            setTimeout(function(){ find(senderID); }, 2000);
+          response.on('end', async()=> {
+            req = await JSON.parse(req);
+            // console.log(search[senderID]);
+            // console.log(req.data[0]);
+            await sendTextMessage(senderID, "搜尋結果如下：");
+            await setTimeout(()=>{ find(senderID) ;},2000)
+           
             step[senderID] = 7;
           });
         });
@@ -348,55 +341,100 @@ function receivedMessage(event) {
           console.log(err);
         });
       } else if(step[senderID] == 7){
-        if (messageText == '確認領養') {
-          autoPost(req, query_count[senderID])
-        }
         if (messageText == '是')
           find(senderID);
         else {
+          sendTextMessage(senderID,"感謝您的查詢\n若想再次查詢\n請按↙功能表[開始使用]");
           step[senderID] = 0;
           start[senderID]=0;
-          sendTextMessage(senderID, "你好！我是動物領養資訊站的小幫手，我可以幫助你查詢適合你領養的寵物喔！\n只要輸入[開始]這兩個字就能開始查詢~ ");
         }
       }
     }
 
   } else if (messageAttachments) {
-    sendTextMessage(senderID, "怕.jpg");
+    sendImageMessage(senderID,"https://ncuerent-yanhsu.c9users.io/assets/nickyoung.jpg");
   }
 }
 
-function find(senderID) {
-  for (var i = query_count[senderID], c = 0; i < req.length; i++, c = 0) {
-    if (search[senderID].kind == "都可" || req[i].animal_kind.match(search[senderID].kind) != null)
+const find = async (senderID) => {
+
+  let c=0;
+  for (let i = query_count[senderID], c = 0; i < req.data.length; i++, c = 0) {
+    if (search[senderID].type == "都可" || req.data[i].type.match(search[senderID].type) != null)
       c++;
-    if (search[senderID].sex == "都可" || pattern[req[i].animal_sex] == search[senderID].sex)
+    if (search[senderID].area == "都可" || req.data[i].area.match(search[senderID].area) != null)
       c++;
-    if (search[senderID].bodytype == "都可" || pattern[req[i].animal_bodytype] == search[senderID].bodytype)
+    if (search[senderID].rent == "都可"){
       c++;
-    if (search[senderID].age == "都可" || _pattern[req[i].animal_age] == search[senderID].age)
+    }
+    else if(search[senderID].rent == '小於3000'){
+      if(req.data[i].rent.match('^([0-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-2][0-9][0-9][0-9])$') != null)
       c++;
-    if (search[senderID].colour == "都可" || req[i].animal_colour.match(search[senderID].colour) != null)
+    }
+    else if(search[senderID].rent == '3000~4000'){
+      if(req.data[i].rent.match('^(3[0-9][0-9][0-9])$') != null)
       c++;
-    if (search[senderID].place == "都可" || req[i].animal_place.match(search[senderID].place) != null)
+    }
+    else if(search[senderID].rent == '4000~5000'){
+      if(req.data[i].rent.match('^(4[0-9][0-9][0-9])$') != null)
+      c++;
+    }
+    else if(search[senderID].rent == '5000以上'){
+      if(req.data[i].rent.match('^([5-9][0-9][0-9][0-9]|[1-9][0-9][0-9][0-9][0-9])$') != null)
+      c++;
+    }
+    if (search[senderID].checknet== "都可" || _pattern[req.data[i].checknet] == search[senderID].checknet)
+      c++;
+    if (search[senderID].checkele == "都可" || _pattern[req.data[i].checkele] == search[senderID].checkele)
+      c++;
+    if (search[senderID].checkwater == "都可" || _pattern[req.data[i].checkwater] == search[senderID].checkwater)
       c++;
     if (c == 6)
     {
       query_count[senderID] = i+1;
       c = 0;
-      sendImageMessage(senderID, req[i].album_file);
-      setTimeout(function(){ sendTextMessage(senderID, req[i].animal_remark); }, 2000);
-      setTimeout(function(){ sendTextMessage(senderID, "小檔案\n動物編號：" + req[i].animal_id + "\n區域編號：" + req[i].animal_subid + "\n狀態：" + pattern[req[i].animal_status] + "\n類型：" + req[i].animal_kind + "\n性別：" + pattern[req[i].animal_sex] + "\n體型：" + pattern[req[i].animal_bodytype] + "\n年紀：" + pattern[req[i].animal_age] + "\n毛色：" + req[i].animal_colour + "\n尋獲地點：" + req[i].animal_foundplace + "\n目前所在地點：" + req[i].animal_place + "\n是否結紮：" + _pattern[req[i].animal_sterilization] + "\n是否已施打狂犬病疫苗：" + _pattern[req[i].animal_bacterin] + "\n開放認養起始日期：" + req[i].animal_opendate + "\n開放認養截止日期：" + req[i].animal_closeddate + "\n資料更新日期：" + req[i].animal_update); }, 4000);
-      setTimeout(function(){ sendTextMessage(senderID, "聯絡資訊\n收容所名稱：" + req[i].shelter_name + "\n收容所地址：" + req[i].shelter_address + "\n聯絡電話：" + req[i].shelter_tel); }, 6000);
-      setTimeout(function(){ sendTextMessage(senderID, "是否顯示下一筆資料？（是 / 否）, 若想領養該寵物 請輸入 [確認領養] 我們將結束搜尋並發文~~"); }, 8000);
+      //sendImageMessage(senderID, req[i].album_file);
+     //await sendTextMessage(senderID,`標題:${req.data[i].title}`);
+      // await sendTextMessage(senderID, "房屋地址:\n：" + req.data[i].address + "\n租金：" +  req.data[i].rent + "\n類型：" +  req.data[i].type + "\n包水：" + _pattern[req.data[i].checkwater] +"\n包電:"+_pattern[req.data[i].checkele] +"\n是否有網路:"+_pattern[req.data[i].checknet]);
+     //await sendTextMessage(senderID, `房屋地址:\n ${req.data[i].address} \n租金：  ${req.data[i].rent} \n類型：   ${req.data[i].type} \n包水：  ${_pattern[req.data[i].checkwater]} \n包電: ${_pattern[req.data[i].checkele]} \n是否有網路: ${_pattern[req.data[i].checknet]}`);
+    // await sendImageMessage(senderID, `https://maps.googleapis.com/maps/api/staticmap?center=${req.data[i].address}&zoom=16.85&size=200x100&scale=8&language=zh-tw&markers=size:mid%7Ccolor:blue%7C${req.data[i].address}&key=AIzaSyBiwSQUTr6brsJoPHcliZ3TVFYgYf7ulbw`);
+     //let step4=await sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]);
+      setTimeout(()=>{ sendTextMessage(senderID,`${req.data[i].title}`) }, 1500);
+      setTimeout(()=>{ sendTextMessage(senderID, `租金：${req.data[i].rent}\n類型： ${req.data[i].type} \n包水： ${_pattern[req.data[i].checkwater]} \n包電:${_pattern[req.data[i].checkele]} \n是否有網路:${_pattern[req.data[i].checknet]}`);}, 3000);
+     // setTimeout(()=>{ sendImageMessage(senderID, `https://maps.googleapis.com/maps/api/staticmap?center=${req.data[i].address}&zoom=16.85&size=200x100&scale=8&language=zh-tw&markers=size:mid%7Ccolor:blue%7C${req.data[i].address}&key=AIzaSyBiwSQUTr6brsJoPHcliZ3TVFYgYf7ulbw`); }, 4000);
+      setTimeout(()=>{ sendurlbutton(senderID,`https://maps.google.com?q=${req.data[i].address}`,req.data[i].address)},1500);
+      setTimeout(()=>{ sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]); }, 4500);
       return;
     }
   }
-  sendTextMessage(senderID, "已無符合搜尋條件的寵物了");
+  await sendTextMessage(senderID, "已無符合搜尋條件的房屋了");
+  setTimeout(()=>{  sendQuickReply(senderID,"再次查詢?!",["再次查詢","結束查詢"]);},1000);
   step[senderID] = 0;
   start[senderID]=0;
 }
+const sendQuickReply=async(recipientId, query_text, text)=> {
+  var q = [];
+  for (var i = 0; i < text.length; i++)
+  {
+    q[i] = {
+      content_type:"text",
+      title: text[i],
+      payload: text[i]
+    };
+  }
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      text: query_text,
+      metadata: "DEVELOPER_DEFINED_METADATA",
+      quick_replies: q
+    }
+  };
 
+await  callSendAPI(messageData);
+}
 /*
  * Delivery Confirmation Event
  *
@@ -444,7 +482,11 @@ function receivedPostback(event) {
 
   // When a postback is called, we'll send a message back to the sender to
   // let them know it was successful
-  sendTextMessage(senderID, "Postback called");
+  if(payload=='USER_DEFINED_PAYLOAD'||payload=='DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'){
+  start[senderID]=0;
+  step[senderID] =0;
+  sendQuickReply(senderID, "你好！\n我是彰師租屋的小幫手\n我可以幫助你查詢你想要租的房子喔！",["查詢"]);
+  }
 }
 
 /*
@@ -484,12 +526,35 @@ function receivedAccountLink(event) {
   console.log("Received account link event with for user %d with status %s " +
     "and auth code %s ", senderID, status, authCode);
 }
-
+const sendurlbutton=async(recipientId,requrl,addr)=>{
+  var messageData ={
+    recipient: {
+      id: recipientId
+    },
+    message:{
+    attachment:{
+      type:"template",
+      payload:{
+        template_type:"button",
+        text:`地址:\n${addr}`,
+        buttons:[
+          {
+            type:"web_url",
+            url:requrl,
+            title:"查看地圖",
+            }
+          ]
+        }
+      }
+    }
+  }
+await  callSendAPI(messageData);
+}
 /*
- * 傳送寵物圖片
+ * 傳送圖片
  *
  */
-function sendImageMessage(recipientId, query_url) {
+const sendImageMessage=async(recipientId, query_url)=> {
   var messageData = {
     recipient: {
       id: recipientId
@@ -504,7 +569,7 @@ function sendImageMessage(recipientId, query_url) {
     }
   };
 
-  callSendAPI(messageData);
+await  callSendAPI(messageData);
 }
 
 
@@ -600,7 +665,7 @@ function sendFileMessage(recipientId) {
  * Send a text message using the Send API.
  *
  */
-function sendTextMessage(recipientId, messageText) {
+const sendTextMessage=async(recipientId, messageText)=> {
   var messageData = {
     recipient: {
       id: recipientId
@@ -611,7 +676,7 @@ function sendTextMessage(recipientId, messageText) {
     }
   };
 
-  callSendAPI(messageData);
+await  callSendAPI(messageData);
 }
 
 /*/////////////////////////////////////////////////////////////////////////////////////////
@@ -745,36 +810,7 @@ function sendReceiptMessage(recipientId) {
  * Send a message with Quick Reply buttons.
  *
  */
-function sendQuickReply(recipientId) {
-  var messageData = {
-    recipient: {
-      id: recipientId
-    },
-    message: {
-      text: "What's your favorite movie genre?",
-      metadata: "DEVELOPER_DEFINED_METADATA",
-      quick_replies: [
-        {
-          "content_type":"text",
-          "title":"Action",
-          "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_ACTION"
-        },
-        {
-          "content_type":"text",
-          "title":"Comedy",
-          "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_COMEDY"
-        },
-        {
-          "content_type":"text",
-          "title":"Drama",
-          "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_DRAMA"
-        }
-      ]
-    }
-  };
 
-  callSendAPI(messageData);
-}
 
 /*
  * Send a read receipt to indicate the message has been read
@@ -861,7 +897,7 @@ function sendAccountLinking(recipientId) {
  */
 function callSendAPI(messageData) {
   request({
-    uri: 'https://graph.facebook.com/v2.6/me/messages',
+    uri: 'https://graph.facebook.com/v2.8/me/messages',
     qs: { access_token: PAGE_ACCESS_TOKEN },
     method: 'POST',
     json: messageData
@@ -887,8 +923,8 @@ function callSendAPI(messageData) {
 
 function autoPost(req, index) {
   //console.log('The function is start')
-  var pageId = "1477720848276964"
-  var token = "EAAYF0HUspqwBAOaKg4OcIVi7ON3VspUbPrhHGd1V2h3EoIry5zzNpJ0z1c7xadin66yULW7D4ZB5KXJhM1lBoDblSNQZCWODAN7JVho1lENAQY5vOsxVDCbirnqMtJoOoqAXoJRgwcc997fZCJQEDewM0R7YkZAZA786VRc95wwZDZD";
+  var pageId = "1695242737460908"
+  var token = "465b4bb8a07328146ddb81d5fd7bdade";
   
   FB.setAccessToken(token)
   //console.log('token was set')

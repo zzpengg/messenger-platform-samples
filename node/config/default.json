@@ -1,6 +1,8 @@
 {
     "appSecret": "465b4bb8a07328146ddb81d5fd7bdade",
-    "pageAccessToken": "EAAYF0HUspqwBANB5iYaaz8bzUTAFvMsGZB59u28ZC1PNFLT4Rp8Ghm6kUzaa2UpW7ZBys7mTOK4Iaq9ka4hGMn3xluUVWrq6ovkNzn19AHZBGIzZBEZCuU1gQ797BcDZAZBtXWVBlELQiZB89eACl9wXg2COYIRcyL5hrdY4mQlZAAoAZDZD",
+    "pageAccessToken": "EAAYF0HUspqwBAEjgsxZBhZAluQmJ8SV3ZBK8QFEt4ZBZATiybGKwGbE2iC3SCmnaf9MHhuTZArEZCfHnzKg7BUt2LysMQIPPtbZBGWsqixtI6d98Cw1KWnG6Jn37nZBtLMEgGgWA6GRQ53nYgXCBvGwMqNOvkuMg0aa8nxZAjyoMUcjAZDZD",
     "validationToken": "yolo",
     "serverURL": "lol"
 }
+//curl -ik -X POST "https://graph.facebook.com/v2.8/me/subscribed_apps?access_token=<token>"
+
