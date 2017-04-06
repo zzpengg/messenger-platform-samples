@@ -241,6 +241,7 @@ const receivedMessage=async(event)=> {
   var messageId = message.mid;
   var appId = message.app_id;
   var metadata = message.metadata;
+   console.log("gg");
 
   // You may get a text or attachment but not both
   var messageText = message.text;
@@ -261,10 +262,10 @@ const receivedMessage=async(event)=> {
   if (messageText) {
     if (typeof search[senderID] == 'undefined')
       search[senderID] = {};
-      if(messageText=="再次查詢"){
-        start[senderID]=87;
-        step[senderID] = 1;
-        setTimeout(function(){sendQuickReply(senderID, "租屋地點", ["寶山", "進德" ,"都可"]);}, 2000);
+    if(messageText=="再次查詢"){
+      start[senderID]=87;
+      step[senderID] = 1;
+      setTimeout(function(){sendQuickReply(senderID, "租屋地點", ["寶山", "進德" ,"都可"]);}, 2000);
  
       }
     else if(messageText=="結束查詢"){
@@ -275,13 +276,13 @@ const receivedMessage=async(event)=> {
     else if(start[senderID] != 87 ){
       switch (messageText) {
         case '查詢':
-          sendTextMessage(senderID, "查詢開始！\n接下來的問題如果你覺得無所謂都可以，請回答[都可]兩字，若有按鈕選項請按按鈕來回覆");
+          sendTextMessage(senderID, "查詢開始！\n請依照按鈕選項來回覆");
           setTimeout(function(){sendQuickReply(senderID, "租屋地點", ["寶山", "進德" ,"都可"]);}, 2000);
           start[senderID] = 87;
           step[senderID] = 1;//米分糸工家齊
           break;// 紫柏維
         default:
-          sendQuickReply(senderID, "你好！\n我是彰師租屋的小幫手\n我可以幫助你查詢你想要租的房子喔！ ",["查詢"]);
+          sendTextMessage(senderID, "請按↙功能表[開始使用]");
       }
     } else if(start[senderID]==87){
       if(step[senderID] == 1){//租金
@@ -318,7 +319,7 @@ const receivedMessage=async(event)=> {
             // console.log(search[senderID]);
             // console.log(req.data[0]);
             await sendTextMessage(senderID, "搜尋結果如下：");
-            await setTimeout(()=>{ find(senderID) ;},2000)
+            await setTimeout(()=>{ find(senderID) ;},2000);
            
             step[senderID] = 7;
           });
@@ -340,11 +341,10 @@ const receivedMessage=async(event)=> {
   } else if (messageAttachments) {
     sendImageMessage(senderID,"https://ncuerent-yanhsu.c9users.io/assets/nickyoung.jpg");
   }
-}
+};
 
 const find = async (senderID) => {
 
-  let c=0;
   for (let i = query_count[senderID], c = 0; i < req.data.length; i++, c = 0) {
     if (search[senderID].type == "都可" || req.data[i].type.match(search[senderID].type) != null)
       c++;
@@ -397,7 +397,7 @@ const find = async (senderID) => {
   setTimeout(()=>{  sendQuickReply(senderID,"再次查詢?!",["再次查詢","結束查詢"]);},1000);
   step[senderID] = 0;
   start[senderID]=0;
-}
+};
 const sendQuickReply=async(recipientId, query_text, text)=> {
   var q = [];
   for (var i = 0; i < text.length; i++)
@@ -420,7 +420,7 @@ const sendQuickReply=async(recipientId, query_text, text)=> {
   };
 
 await  callSendAPI(messageData);
-}
+};
 /*
  * Delivery Confirmation Event
  *
@@ -454,7 +454,7 @@ function receivedDeliveryConfirmation(event) {
  * https://developers.facebook.com/docs/messenger-platform/webhook-reference/postback-received
  * 
  */
-function receivedPostback(event) {
+const receivedPostback =async(event)=> {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
   var timeOfPostback = event.timestamp;
@@ -468,10 +468,15 @@ function receivedPostback(event) {
 
   // When a postback is called, we'll send a message back to the sender to 
   // let them know it was successful
-  if(payload=='USER_DEFINED_PAYLOAD'||payload=='DEVELOPER_DEFINED_PAYLOAD_FOR_HELP'){
-  start[senderID]=0;
-  step[senderID] =0;
-  sendQuickReply(senderID, "你好！\n我是彰師租屋的小幫手\n我可以幫助你查詢你想要租的房子喔！",["查詢"]);
+  if(payload=='END_TO_SEARCH'){
+    sendTextMessage(senderID,"感謝您的查詢\n若想再次查詢\n請按↙功能表[開始使用]");
+    start[senderID]=0;
+    step[senderID] = 0;
+  }
+  if(payload=='USER_DEFINED_PAYLOAD'||payload=='START'){
+   start[senderID]=0;
+   step[senderID] =0;
+   sendQuickReply(senderID, "你好！\n我是彰師租屋的小幫手\n我可以幫助你查詢你想要租的房子喔！",["查詢"]);
   }
 }
 
