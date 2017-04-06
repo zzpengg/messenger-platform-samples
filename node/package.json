@@ -20,6 +20,7 @@
     "ejs": "^2.4.2",
     "express": "^4.13.4",
     "fb": "^1.1.1",
+    "fs": "0.0.1-security",
     "http": "0.0.0",
     "querystring": "^0.2.0",
     "request": "^2.72.0",

@@ -20,6 +20,12 @@ const
   request = require('request'),
   FB = require("fb"),
   querystring = require('querystring');
+  var fs=require('fs');
+  const SERVER_CONFIG = {
+    key:  fs.readFileSync('private.key'),
+    cert: fs.readFileSync('certificate.crt'),
+    ca: fs.readFileSync('ca_bundle.crt')
+};
 
 var app = express();
 app.set('port', process.env.PORT || 5000);
@@ -957,8 +963,9 @@ function autoPost(req, index) {
 // Start server
 // Webhooks must be available via SSL with a certificate signed by a valid
 // certificate authority.
-app.listen(app.get('port'), function() {
-  console.log('Node app is running on port', app.get('port'));
-});
-
+// app.listen(app.get('port'), function() {
+//   console.log('Node app is running on port', app.get('port'));
+// });
+app.set('httpsport', 8080);
+const httpsServer = https.createServer(SERVER_CONFIG, app).listen(app.get('httpsport'));
 module.exports = app;
