@@ -399,11 +399,12 @@ const find = async (senderID) => {
      //await sendTextMessage(senderID, `房屋地址:\n ${req.data[i].address} \n租金：  ${req.data[i].rent} \n類型：   ${req.data[i].type} \n包水：  ${_pattern[req.data[i].checkwater]} \n包電: ${_pattern[req.data[i].checkele]} \n是否有網路: ${_pattern[req.data[i].checknet]}`);
     // await sendImageMessage(senderID, `https://maps.googleapis.com/maps/api/staticmap?center=${req.data[i].address}&zoom=16.85&size=200x100&scale=8&language=zh-tw&markers=size:mid%7Ccolor:blue%7C${req.data[i].address}&key=AIzaSyBiwSQUTr6brsJoPHcliZ3TVFYgYf7ulbw`);
      //let step4=await sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]);
-      setTimeout(()=>{ sendTextMessage(senderID,`${req.data[i].title}`) }, 1500);
-      setTimeout(()=>{ sendTextMessage(senderID, `租金：${req.data[i].rent}\n類型： ${req.data[i].type} \n包水： ${_pattern[req.data[i].checkwater]} \n包電:${_pattern[req.data[i].checkele]} \n是否有網路:${_pattern[req.data[i].checknet]}`);}, 3000);
+      setTimeout(()=> { sendTextMessage(senderID,`${req.data[i].title}`) }, 1500);
+      setTimeout(()=> { sendTextMessage(senderID, `租金：${req.data[i].rent}\n類型： ${req.data[i].type} \n包水： ${_pattern[req.data[i].checkwater]} \n包電:${_pattern[req.data[i].checkele]} \n是否有網路:${_pattern[req.data[i].checknet]}`);}, 3000);
      // setTimeout(()=>{ sendImageMessage(senderID, `https://maps.googleapis.com/maps/api/staticmap?center=${req.data[i].address}&zoom=16.85&size=200x100&scale=8&language=zh-tw&markers=size:mid%7Ccolor:blue%7C${req.data[i].address}&key=AIzaSyBiwSQUTr6brsJoPHcliZ3TVFYgYf7ulbw`); }, 4000);
-      setTimeout(()=>{ sendurlbutton(senderID,`https://maps.google.com?q=${req.data[i].address}`,req.data[i].address)},1500);
-      setTimeout(()=>{ sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]); }, 4500);
+      setTimeout(()=> { sendurlbutton(senderID,`https://maps.google.com?q=${req.data[i].address}`,req.data[i].address)},1500);
+      setTimeout(()=> { if(req.data[i].path){if(req.data[i].path.length>0){req.data[i].path.map((val)=>{sendImageMessage(senderID,`http://test-zzpengg.c9users.io:8080/images/house/${req.data[i].landlordId}/${req.data[i].id}/${val}`)})}}}, 500);
+      setTimeout(()=> { sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]); }, 4500);
       return;
     }
   }
