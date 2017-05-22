@@ -405,12 +405,13 @@ const find = async (senderID) => {
      //await sendTextMessage(senderID, `房屋地址:\n ${req.data[i].address} \n租金：  ${req.data[i].rent} \n類型：   ${req.data[i].type} \n包水：  ${_pattern[req.data[i].checkwater]} \n包電: ${_pattern[req.data[i].checkele]} \n是否有網路: ${_pattern[req.data[i].checknet]}`);
     // await sendImageMessage(senderID, `https://maps.googleapis.com/maps/api/staticmap?center=${req.data[i].address}&zoom=16.85&size=200x100&scale=8&language=zh-tw&markers=size:mid%7Ccolor:blue%7C${req.data[i].address}&key=AIzaSyBiwSQUTr6brsJoPHcliZ3TVFYgYf7ulbw`);
      //let step4=await sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]);
-      setTimeout(()=> { sendTextMessage(senderID,`${req.data[i].title}`) }, 1500);
-      setTimeout(()=> { sendTextMessage(senderID, `租金：${req.data[i].rent}\n類型： ${req.data[i].type} \n包水： ${_pattern[req.data[i].checkwater]} \n包電:${_pattern[req.data[i].checkele]} \n是否有網路:${_pattern[req.data[i].checknet]}`);}, 3000);
+       setTimeout(async()=> { await sendTextMessage(senderID,`${req.data[i].title}`) }, 500);
+       setTimeout(async()=> { await sendTextMessage(senderID, `租金：${req.data[i].rent}\n類型： ${req.data[i].type} \n包水： ${_pattern[req.data[i].checkwater]} \n包電:${_pattern[req.data[i].checkele]} \n是否有網路:${_pattern[req.data[i].checknet]}\n備註:\n${req.data[i].remark}`);}, 1000);
+       setTimeout(async()=> { await sendcallbutton(senderID,`${req.data[i].phone}`) }, 1100);
      // setTimeout(()=>{ sendImageMessage(senderID, `https://maps.googleapis.com/maps/api/staticmap?center=${req.data[i].address}&zoom=16.85&size=200x100&scale=8&language=zh-tw&markers=size:mid%7Ccolor:blue%7C${req.data[i].address}&key=AIzaSyBiwSQUTr6brsJoPHcliZ3TVFYgYf7ulbw`); }, 4000);
-      setTimeout(()=> { sendurlbutton(senderID,`https://maps.google.com?q=${req.data[i].address}`,req.data[i].address)},1500);
-      setTimeout(()=> { if(req.data[i].path){if(req.data[i].path.length>0){req.data[i].path.map((val)=>{sendImageMessage(senderID,`http://test-zzpengg.c9users.io:8080/images/house/${req.data[i].landlordId}/${req.data[i].id}/${val}`)})}}}, 500);
-      setTimeout(()=> { sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]); }, 4500);
+       setTimeout(async()=> { await sendurlbutton(senderID,`https://maps.google.com?q=${req.data[i].address}`,req.data[i].address)},1500);
+       setTimeout(async()=> { if(req.data[i].path){if(req.data[i].path.length>0){req.data[i].path.map(async(val)=>{await sendImageMessage(senderID,`http://test-zzpengg.c9users.io:8080/images/house/${req.data[i].landlordId}/${req.data[i].id}/${val}`)})}}}, 1000);
+       setTimeout(async()=> { await sendQuickReply(senderID, "是否顯示下一筆資料？\n",["是","否"]); }, 4500);
       return;
     }
   }
@@ -538,8 +539,32 @@ function receivedAccountLink(event) {
   console.log("Received account link event with for user %d with status %s " +
     "and auth code %s ", senderID, status, authCode);
 }
-const sendurlbutton=async(recipientId,requrl,addr)=>{
-  var messageData ={
+const sendcallbutton = async (recipientId,phone_number) => {
+  const messageData ={
+    recipient: {
+      id: recipientId
+    },
+    message:{
+    attachment:{
+      type:"template",
+      payload:{
+        template_type:"button",
+        text:`房東電話:\n${phone_number}`,
+        buttons:[
+          {
+            type:"phone_number",
+            payload:phone_number,
+            title:"打給房東",
+            }
+          ]
+        }
+      }
+    }
+  }
+await  callSendAPI(messageData);
+}
+const sendurlbutton = async (recipientId,requrl,addr) => {
+  const messageData ={
     recipient: {
       id: recipientId
     },
@@ -567,7 +592,7 @@ await  callSendAPI(messageData);
  *
  */
 const sendImageMessage=async(recipientId, query_url)=> {
-  var messageData = {
+  const messageData = {
     recipient: {
       id: recipientId
     },
@@ -575,11 +600,12 @@ const sendImageMessage=async(recipientId, query_url)=> {
       attachment: {
         type: "image",
         payload: {
-          url: query_url
+          url:query_url
         }
       }
     }
   };
+  
 
 await  callSendAPI(messageData);
 }
@@ -907,30 +933,60 @@ function sendAccountLinking(recipientId) {
  * get the message id in a response
  *
  */
-function callSendAPI(messageData) {
-  request({
-    uri: 'https://graph.facebook.com/v2.8/me/messages',
-    qs: { access_token: PAGE_ACCESS_TOKEN },
-    method: 'POST',
-    json: messageData
+ const callSendAPI = async (messageData) => {
+	return new Promise((resolve, reject) => {
+		request({
+			uri: 'https://graph.facebook.com/v2.8/me/messages',
+			qs: {
+				access_token: PAGE_ACCESS_TOKEN
+			},
+			method: 'POST',
+			json: messageData
 
-  }, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      var recipientId = body.recipient_id;
-      var messageId = body.message_id;
+		}, function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				var recipientId = body.recipient_id;
+				var messageId = body.message_id;
 
-      if (messageId) {
-        console.log("Successfully sent message with id %s to recipient %s",
-          messageId, recipientId);
-      } else {
-      console.log("Successfully called Send API for recipient %s",
-        recipientId);
-      }
-    } else {
-      console.error(response.error);
-    }
-  });
+				if (messageId) {
+					console.log("Successfully sent message with id %s to recipient %s",
+						messageId, recipientId);
+				} else {
+					console.log("Successfully called Send API for recipient %s",
+						recipientId);
+				}
+				resolve();
+			} else {
+				console.error(response.error);
+				reject(error);
+			}
+		});
+	})
 }
+// const callSendAPI = async (messageData)=> {
+//   await request({
+//     uri: 'https://graph.facebook.com/v2.8/me/messages',
+//     qs: { access_token: PAGE_ACCESS_TOKEN },
+//     method: 'POST',
+//     json: messageData
+
+//   }, function (error, response, body) {
+//     if (!error && response.statusCode == 200) {
+//       var recipientId = body.recipient_id;
+//       var messageId = body.message_id;
+
+//       if (messageId) {
+//         console.log("Successfully sent message with id %s to recipient %s",
+//           messageId, recipientId);
+//       } else {
+//       console.log("Successfully called Send API for recipient %s",
+//         recipientId);
+//       }
+//     } else {
+//       console.error(response.error);
+//     }
+//   });
+// }
 
 
 function autoPost(req, index) {
